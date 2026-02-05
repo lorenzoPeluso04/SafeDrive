@@ -48,10 +48,6 @@ cols_to_scale = ['speed_limit', 'curvature', 'lane_width', 'traffic_density']
 existing_cols = [c for c in cols_to_scale if c in df_final.columns]
 df_final[existing_cols] = scaler.fit_transform(df_final[existing_cols])"""
 
-# %% [6] Salvataggio dei Dati Processati
-df_final.to_csv('data/dataset_processed.csv', index=False)
-print("🚀 Fase 1 completata! Dataset salvato in 'data/dataset_processed.csv'")
-print(f"Nuove dimensioni del dataset: {df_final.shape}")
 
 # %% [4] Analisi Esplorativa (EDA) - Matrice di Correlazione
 # Questo grafico è fondamentale per la tua tesi: mostra cosa causa il rischio.
@@ -62,3 +58,15 @@ correlation_matrix = numeric_df.corr()
 sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
 plt.title("Matrice di Correlazione: Fattori di Rischio Incidenti")
 plt.show()
+
+
+# %% [6] Salvataggio dei Dati Processati
+
+# Conversione booleani (es. road_signs_present) in 0/1 per i calcoli
+bool_cols = df_final.select_dtypes(include=['bool']).columns
+for col in bool_cols:
+    df_final[col] = df_final[col].astype(int)
+
+df_final.to_csv('data/dataset_processed.csv', index=False)
+print("🚀 Fase 1 completata! Dataset salvato in 'data/dataset_processed.csv'")
+print(f"Nuove dimensioni del dataset: {df_final.shape}")
