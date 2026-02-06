@@ -72,7 +72,7 @@ except FileNotFoundError:
 
 # %% [8] Conversione del Target in Classi
 # Trasformiamo il rischio continuo in due classi: 1 (Alto Rischio), 0 (Basso Rischio)
-df['is_dangerous'] = (df['accident_risk'] >= 0.5).astype(int)
+df['is_dangerous'] = (df['accident_risk'] >= 0.6).astype(int)
 
 print(f"✅ Target binarizzato: {df['is_dangerous'].value_counts().to_dict()}")
 # Rimuoviamo la colonna originale del rischio numerico per non "barare" durante il training

@@ -10,16 +10,14 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 #%% [2] Caricamento del Dataset
 try:
-    import os
-    os.chdir('/Users/lorenzopeluso/Library/CloudStorage/OneDrive-UniversitàdegliStudidiBari/Documents/Università/TerzoAnno/ICon/SafeDrive')
-    df = pd.read_csv('data/dataset_processed.csv')
+    df = pd.read_csv('../data/dataset_processed.csv')
     print(f"✅ Dataset caricato con successo: {df.shape[0]} righe e {df.shape[1]} colonne.")
     df.head(5)
 except FileNotFoundError:
     print("❌ Errore: File non trovato. Controlla il percorso del file.")
 
 # %% [3] Suddivisione in Feature e Target
-X = df.drop(['id', 'accident_risk'], axis=1)  # Feature
+X = df.drop(['id', 'accident_risk','num_reported_accidents'], axis=1)  # Feature
 #Rimuovo id perchè non deve influire nella predizione del rischio
 y = df['accident_risk']                       # Target
 
@@ -28,7 +26,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 print(f"✅ Suddivisione completata: {X_train.shape[0]} righe per addestramento, {X_test.shape[0]} righe per test") 
 
 # %% [5] Addestramento del Modello Random Forest
-rfr = RandomForestRegressor(random_state=13)
+rfr = RandomForestRegressor(
+    n_estimators=200,
+    max_depth=10,
+    min_samples_split=5,
+    min_samples_leaf=1,
+    random_state=13
+)
 rfr.fit(X_train, y_train)
 
 print("🚀 Modello Random Forest addestrato con successo!")
@@ -75,43 +79,3 @@ print(f"✅ Valutazione Modello Ottimizzato completata! MAE: {mae_optimized:.4f}
 import joblib
 joblib.dump(best_rfr, 'models/random_forest_model.pkl')
 print("💾 Modello salvato in 'models/random_forest_model.pkl'")
-
-# %% [9] Visualizzazione dei Risultati e Grafici
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Configurazione stile
-sns.set_theme(style="whitegrid")
-plt.rcParams['figure.figsize'] = (12, 5)
-
-# 1. Grafico Real vs Predicted (Per valutare la precisione visivamente)
-plt.subplot(1, 2, 1)
-sns.scatterplot(x=y_test, y=y_pred_optimized, alpha=0.5)
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], '--r', lw=2)
-plt.title("Real vs Predicted: Accident Risk")
-plt.xlabel("Valore Reale")
-plt.ylabel("Predizione Modello")
-
-# 2. Distribuzione degli Errori (Residui)
-plt.subplot(1, 2, 2)
-residuals = y_test - y_pred_optimized
-sns.histplot(residuals, kde=True, color='purple')
-plt.title("Distribuzione dei Residui (Errori)")
-plt.xlabel("Errore (Reale - Predetto)")
-
-plt.tight_layout()
-plt.show()
-
-# 3. Grafico Feature Importance (Fondamentale per la Fase 3 - Ontologia)
-plt.figure(figsize=(10, 6))
-importances = best_rfr.feature_importances_
-feature_names = X.columns
-feature_importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
-feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
-
-sns.barplot(x='Importance', y='Feature', data=feature_importance_df.head(10), palette='viridis')
-plt.title("Top 10 Feature più importanti per il Rischio Incidenti")
-plt.show()
-
-# Salva l'importanza per usarla nell'ontologia
-feature_importance_df.to_csv('results/feature_importance.csv', index=False)
