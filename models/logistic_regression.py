@@ -60,7 +60,7 @@ sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
 plt.title('Matrice di Confusione')
 plt.show()
 
-plot_learning_curve(model, X_train, y_train, "Regressione Logistica", 'accuracy')
+plot_learning_curve(model, X_train, y_train, "Regressione Logistica - accuracy", 'accuracy')
 
 # %% [6] Valutazione del Modello con AUC-ROC
 
