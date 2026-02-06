@@ -1,9 +1,9 @@
-# %% [1] Import delle librerie e Setup M2
+# %% [1] Import delle librerie
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-#from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler
 
 # Impostazione estetica per i grafici
 sns.set_theme(style="whitegrid")
@@ -28,7 +28,7 @@ if df.isnull().values.any():
 df['speed_limit'] = df['speed_limit'] * 1.60934
 print("✅ Speed limit convertito da mph a km/h")
 
-# %% [5] Preprocessing per ANN e ML (Encoding & Scaling)
+# %% [5] Preprocessing per ML (Encoding)
 # 1. Procedo a utilizzare la tecnica di One-Hot Encoding per le variabili categoriche
 categorical_cols = ['road_type', "weather", "time_of_day", "lighting"]
 df_final = pd.get_dummies(df, columns=categorical_cols) 
@@ -38,16 +38,6 @@ df_final = pd.get_dummies(df, columns=categorical_cols)
 bool_cols = df.select_dtypes(include=['bool']).columns
 for col in bool_cols:
     df[col] = df[col].astype(int)
-
-# 2. FEATURE SCALING (Per modelli di regresssione)
-# uniformiamo le scale delle feature numeriche per migliorare la convergenza del modello
-"""scaler = StandardScaler()
-cols_to_scale = ['speed_limit', 'curvature', 'lane_width', 'traffic_density']
-
-# Applichiamo lo scaler solo se le colonne esistono nel tuo dataset
-existing_cols = [c for c in cols_to_scale if c in df_final.columns]
-df_final[existing_cols] = scaler.fit_transform(df_final[existing_cols])"""
-
 
 # %% [4] Analisi Esplorativa (EDA) - Matrice di Correlazione
 # Questo grafico è fondamentale per la tua tesi: mostra cosa causa il rischio.
@@ -70,3 +60,37 @@ for col in bool_cols:
 df_final.to_csv('data/dataset_processed.csv', index=False)
 print("🚀 Fase 1 completata! Dataset salvato in 'data/dataset_processed.csv'")
 print(f"Nuove dimensioni del dataset: {df_final.shape}")
+
+"""Di seguito procedo a realizzare il preprocessing specifico per la classificazione del rischio di incidenti stradali."""
+# %% [7] Caricamento del Dataset
+# Sostituisci 'data/train.csv' con il tuo percorso effettivo
+try:
+    df = pd.read_csv('data/dataset_processed.csv')
+    print(f"✅ Dataset caricato con successo: {df.shape[0]} righe e {df.shape[1]} colonne.")
+except FileNotFoundError:
+    print("❌ Errore: File non trovato. Controlla il percorso del file.")
+
+# %% [8] Conversione del Target in Classi
+# Trasformiamo il rischio continuo in due classi: 1 (Alto Rischio), 0 (Basso Rischio)
+df['is_dangerous'] = (df['accident_risk'] >= 0.5).astype(int)
+
+print(f"✅ Target binarizzato: {df['is_dangerous'].value_counts().to_dict()}")
+# Rimuoviamo la colonna originale del rischio numerico per non "barare" durante il training
+df = df.drop(columns=['accident_risk'])
+print(df.head(5))
+
+# %% [9] FEATURE SCALING (Fondamentale per Regressione Logistica)
+# Scaliamo le variabili numeriche per avere media 0 e varianza 1
+scaler = StandardScaler()
+numeric_features = ['speed_limit', 'curvature', 'lane_width'] # Aggiungi altre se presenti
+
+# Verifichiamo che le colonne esistano prima di scalare
+existing_numeric = [c for c in numeric_features if c in df.columns]
+df[existing_numeric] = scaler.fit_transform(df[existing_numeric])
+
+print(f"✅ Scaling completato su: {existing_numeric}")
+print(df.head(5))
+
+# %% [10] Salvataggio
+df.to_csv('data/classification_dataset_processed.csv', index=False)
+print("🚀 Fase 1 completata! Dataset pronto per Regressione Logistica e Random Forest.")
