@@ -4,6 +4,7 @@ Una volta aver compreso quali sono i migliori iperparametri, salveremo il modell
 
 #%% [1] Importazione delle Librerie
 import pandas as pd
+import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
@@ -76,6 +77,7 @@ mae_optimized = mean_absolute_error(y_test, y_pred_optimized)
 print(f"✅ Valutazione Modello Ottimizzato completata! MAE: {mae_optimized:.4f}")
 
 #%% [9] Salvataggio del Modello Addestrato
-import joblib
-joblib.dump(best_rfr, 'models/random_forest_model.pkl')
+joblib.dump(best_rfr, '../models/random_forest_model.pkl')
 print("💾 Modello salvato in 'models/random_forest_model.pkl'")
+#"Risulta che i migliori parametri trovati sono:\n    Migliori parametri: {'max_depth': 10, 'min_samples_leaf': 1, 'min_samples_split': 5, 'n_estimators': 200}"
+# %%

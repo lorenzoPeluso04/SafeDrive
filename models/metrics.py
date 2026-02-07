@@ -105,7 +105,7 @@ def random_forest_metrics_(model, X, y, test_size=0.2, random_state=19):
     # Salva l'importanza per usarla nell'ontologia
     feature_importance_df.to_csv('../Results/feature_importance.csv', index=False)
 
-""" 
+
 #%% [1] Caricamento del Dataset
 try:
     df = pd.read_csv('../data/dataset_processed.csv')
@@ -126,5 +126,3 @@ except FileNotFoundError:
 
 # %% [3] Valutazione del Modello su Test Set
 random_forest_metrics_(best_rfr, X, y)
-
-"""

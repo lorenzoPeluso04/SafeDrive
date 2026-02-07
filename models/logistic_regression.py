@@ -1,8 +1,9 @@
 #%% [1] Import delle librerie
 import pandas as pd
 import seaborn as sns
+import joblib
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import roc_curve, auc
@@ -40,10 +41,28 @@ y = df['is_dangerous']        # Target
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=11)
 print(f"✅ Suddivisione completata: {X_train.shape[0]} righe per addestramento, {X_test.shape[0]} righe per test") 
 
-# %% [4] Addestramento del Modello di Regressione Logistica
+# %% [4] Addestramento del Modello di Regressione Logistica con Hyperparameter Tuning
 
-model = LogisticRegression()
-model.fit(X_train, y_train) 
+# Definisci la griglia di iperparametri
+param_grid = {
+    'C': [0.001, 0.01, 0.1, 1, 10, 100],           # Inverso della forza di regolarizzazione
+    'penalty': ['l1', 'l2'],                         # Tipo di regolarizzazione
+    'solver': ['lbfgs', 'liblinear'],               # Algoritmo di ottimizzazione
+    'max_iter': [100, 200, 500]                     # Numero massimo di iterazioni
+}
+
+# Grid Search con Cross-Validation
+model_base = LogisticRegression(random_state=11)
+grid_search = GridSearchCV(model_base, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
+grid_search.fit(X_train, y_train)
+
+print(f"✅ Miglior set di iperparametri: {grid_search.best_params_}")
+print(f"✅ Miglior score CV: {grid_search.best_score_:.4f}")
+
+# Usa il modello ottimale
+model = grid_search.best_estimator_
+joblib.dump(model, 'models/logistic_regression_model.pkl')
+print("✅ Modello salvato con successo!")
 
 # %% [5] Valutazione del Modello
 
