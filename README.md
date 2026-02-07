@@ -1,4 +1,4 @@
 # SafeDrive
 ## Progetto ICON
 
-### Classificatore -> Regressore -> Ontologia (XAI) -> CSP 
+### Classificatore -> Regressore -> Ontologia -> CSP 
