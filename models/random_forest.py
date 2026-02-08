@@ -79,5 +79,3 @@ print(f"✅ Valutazione Modello Ottimizzato completata! MAE: {mae_optimized:.4f}
 #%% [9] Salvataggio del Modello Addestrato
 joblib.dump(best_rfr, '../models/random_forest_model.pkl')
 print("💾 Modello salvato in 'models/random_forest_model.pkl'")
-#"Risulta che i migliori parametri trovati sono:\n    Migliori parametri: {'max_depth': 10, 'min_samples_leaf': 1, 'min_samples_split': 5, 'n_estimators': 200}"
-# %%

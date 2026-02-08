@@ -1,5 +1,4 @@
 from owlready2 import get_ontology, Thing, DatatypeProperty, FunctionalProperty, ObjectProperty, AllDifferent, Imp
-from owlready2 import sync_reasoner_pellet
 
 onto = get_ontology("http://safedrive.it/ontology.owl")
 
@@ -74,6 +73,7 @@ with onto:
     PrestareAttenzione = Raccomandazione("PrestareAttenzione")
     ProtezioneLuminosa = Raccomandazione("ProtezioneLuminosa")
     AumentareDistanzaSicurezza = Raccomandazione("AumentareDistanzaSicurezza")
+    ControllaFariAccesi = Raccomandazione("ControllaFariAccesi")
     Normale = Raccomandazione("Normale")
 
     #Modelli di ML
@@ -190,7 +190,7 @@ with onto:
     regola_normale = Imp()
     regola_normale.set_as_rule("""TrattoStradale(?t),
                                 haPericolo(?t, 0), 
-                               haPunteggioPericolo(?t, ?p), lessThanOrEqual(?p, 0.5)
+                               haPunteggioPericolo(?t, ?p), lessThanOrEqual(?p, 0.4)
                                 -> haStatoSicurezza(?t, Sicuro)""")
     
     regola_stato_sicuro = Imp()
@@ -201,7 +201,7 @@ with onto:
     regola_pericolo = Imp()
     regola_pericolo.set_as_rule("""TrattoStradale(?t),
                                 haPericolo(?t, 1),
-                                haPunteggioPericolo(?t, ?p), greaterThan(?p, 0.5),
+                                haPunteggioPericolo(?t, ?p), greaterThan(?p, 0.4),
                                 lessThanOrEqual(?p, 0.8)
                                 -> haStatoSicurezza(?t, Pericolo)""")
     
@@ -210,6 +210,7 @@ with onto:
                                         haPericolo(?t, 1),
                                         haPunteggioPericolo(?t, ?p), greaterThan(?p, 0.8) 
                                         -> haStatoSicurezza(?t, PericoloEstremo)""")
+
     
     #==============In base alle condizioni, associamo un tipo di rischio specifico==============#
 
@@ -241,6 +242,12 @@ with onto:
                                     haCurvatura(?t, ?c), greaterThan(?c, 0.4)
                                     -> haTipoRischio(?t, RischioCurvatura)""")
     
+    pericolo_curvatura_noML = Imp()
+    pericolo_curvatura_noML.set_as_rule("""TrattoStradale(?t), 
+                                        haPericolo(?t, 0), haCurvatura(?t, ?c), 
+                                        greaterThan(?c, 0.75)
+                                    -> haTipoRischio(?t, RischioCurvatura)""")
+    
     #Rischio di velocità
     pericolo_velocità = Imp()
     pericolo_velocità.set_as_rule("""TrattoStradale(?t),
@@ -262,7 +269,8 @@ with onto:
                                             haTipoRischio(?t, RischioVisibilità)
                                             -> haRaccomandazione(?t, PrestareAttenzione),
                                             haRaccomandazione(?t, Rallentare),
-                                            haRaccomandazione(?t, AumentareDistanzaSicurezza)""")
+                                            haRaccomandazione(?t, AumentareDistanzaSicurezza),
+                                           haRaccomandazione(?t, ControllaFariAccesi)""")
     
     raccomandazione_curvatura = Imp()
     raccomandazione_curvatura.set_as_rule("""TrattoStradale(?t),
@@ -282,104 +290,3 @@ with onto:
                                             haTipoRischio(?t, RischioLuminosità)
                                             -> haRaccomandazione(?t, ProtezioneLuminosa),
                                             haRaccomandazione(?t, AumentareDistanzaSicurezza)""")
-
-
-
-    # ... (Tutto il tuo codice precedente) ...
-
-# Importiamo il reasoner specifico per SWRL (Pellet è raccomandato per regole complesse)
-
-
-def popola_e_ragiona():
-    """
-    Funzione per simulare l'inserimento dati dai modelli ML 
-    e testare le regole di inferenza.
-    """
-    print("--- Inizio Popolazione ABox ---")
-
-    # --- SCENARIO 1: Strada Sicura ---
-    # Il modello ML dice: Basso rischio (0.2), Classificazione 0 (Sicuro)
-    t1 = TrattoStradale("Tratto_A1_Autostrada")
-    t1.haTipoStrada = Autostrada
-    t1.haLunghezza = 2.5
-    t1.haLimiteVelocità = 130
-    t1.haCurvatura = 0.1            # Curvatura bassa
-    t1.haCondizioniMeteo = Sole
-    t1.haIlluminazione = Diurno
-    
-    # Output dei Modelli ML (Input per l'Ontologia)
-    t1.haPericolo = 0               # Output Classificatore
-    t1.haPunteggioPericolo = 0.2    # Output Regressore
-    t1.haMessaggioUtente = "Traffico scorrevole"
-
-    # --- SCENARIO 2: Pericolo Curva Pericolosa ---
-    # Il modello ML dice: Alto rischio (0.75), Classificazione 1 (Pericolo)
-    t2 = TrattoStradale("Tratto_B3_Statale")
-    t2.haTipoStrada = Rurale
-    t2.haLunghezza = 1.0
-    t2.haLimiteVelocità = 90
-    t2.haCurvatura = 0.6            # Curvatura ALTA (> 0.4 scatta la regola)
-    t2.haCondizioniMeteo = Sole
-    t2.haIlluminazione = Diurno
-
-    # Output dei Modelli ML
-    t2.haPericolo = 1               # Output Classificatore
-    t2.haPunteggioPericolo = 0.75   # Output Regressore (tra 0.5 e 0.8 -> Pericolo)
-
-    # --- SCENARIO 3: Pericolo Visibilità (Pioggia + Notte) ---
-    # Il modello ML dice: Rischio Estremo (0.9), Classificazione 1
-    t3 = TrattoStradale("Tratto_C7_Urbana")
-    t3.haTipoStrada = Urbana
-    t3.haLunghezza = 0.5
-    t3.haLimiteVelocità = 50
-    t3.haCurvatura = 0.1
-    t3.haCondizioniMeteo = Pioggia  # Condizione avversa
-    t3.haIlluminazione = Notturno   # Condizione avversa
-
-    # Output dei Modelli ML
-    t3.haPericolo = 1               
-    t3.haPunteggioPericolo = 0.9    # > 0.8 -> Pericolo Estremo
-
-    print("Dati inseriti. Avvio del Reasoner (Pellet)...")
-    
-    # AVVIO DEL REASONER
-    # infer_property_values=True permette di dedurre le proprietà (es. haRaccomandazione)
-    with onto:
-        sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
-
-    print("--- Inferenza Completata. Risultati: ---")
-    
-    # Funzione helper per stampare i risultati
-    stampa_report(t1)
-    stampa_report(t2)
-    stampa_report(t3)
-
-def stampa_report(tratto):
-    print(f"\n📍 Analisi: {tratto.name}")
-    print(f"   Input ML - Score: {tratto.haPunteggioPericolo}, Class: {tratto.haPericolo}")
-    
-    # Recuperiamo lo Stato di Sicurezza inferito
-    if tratto.haStatoSicurezza:
-        print(f"   🛡️ STATO RILEVATO: {tratto.haStatoSicurezza.name}")
-    else:
-        print("   🛡️ STATO RILEVATO: Non determinato")
-
-    # Recuperiamo il Tipo di Rischio inferito (se presente)
-    rischi = tratto.haTipoRischio
-    if rischi:
-        # Essendo una lista (potrebbero esserci più rischi), li uniamo
-        nomi_rischi = ", ".join([r.name for r in rischi])
-        print(f"   ⚠️ TIPO RISCHIO: {nomi_rischi}")
-    
-    # Recuperiamo le Raccomandazioni inferite
-    raccomandazioni = tratto.haRaccomandazione
-    if raccomandazioni:
-        print("   💡 RACCOMANDAZIONI SISTEMA:")
-        for rac in raccomandazioni:
-            print(f"      - {rac.name}")
-    else:
-        print("      - Nessuna raccomandazione specifica.")
-
-# Eseguiamo la simulazione
-if __name__ == "__main__":
-    popola_e_ragiona()
