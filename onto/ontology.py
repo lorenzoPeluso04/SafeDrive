@@ -95,6 +95,10 @@ with onto:
 
     #proprietà che legano oggetti
 
+    class èParteDiStrada(ObjectProperty, FunctionalProperty):
+        domain = [TrattoStradale]
+        range = [Strada]
+
     class haCondizioniMeteo(ObjectProperty, FunctionalProperty):
         domain = [TrattoStradale]
         range = [Meteo]
@@ -153,6 +157,10 @@ with onto:
 
     class haLimiteVelocità(DatatypeProperty, FunctionalProperty):
         domain = [TrattoStradale]
+        range = [int]
+    
+    class haLimiteVelocitàLegale(DatatypeProperty, FunctionalProperty):
+        domanin = [Strada]
         range = [int]
     
     class haLimiteVelocitàRaccomandato(DatatypeProperty, FunctionalProperty):
@@ -290,3 +298,30 @@ with onto:
                                             haTipoRischio(?t, RischioLuminosità)
                                             -> haRaccomandazione(?t, ProtezioneLuminosa),
                                             haRaccomandazione(?t, AumentareDistanzaSicurezza)""")
+    
+    ##========Background Knowlege proveniente dalle regolamentazioni stradali========#
+
+    limite_velocità_autostrada = Imp()
+    limite_velocità_autostrada.set_as_rule("""Strada(?s),
+                                           haTipoStrada(?s, Autostrada)
+                                           -> haLimiteVelocitàLegale(?s, 130)
+                                           """)
+    
+    limite_velocità_urbana = Imp()
+    limite_velocità_urbana.set_as_rule("""Strada(?s),
+                                           haTipoStrada(?s, Urbana)
+                                           -> haLimiteVelocitàLegale(?s, 50)
+                                           """)
+    
+    limite_velocità_rurale = Imp()
+    limite_velocità_rurale.set_as_rule("""Strada(?s),
+                                           haTipoStrada(?s, Rurale)
+                                           -> haLimiteVelocitàLegale(?s, 90)
+                                           """)
+    
+    limite_velocità_ereditato = Imp()
+    limite_velocità_ereditato.set_as_rule("""TrattoStradale(?t), 
+                                          èParteDiStrada(?t, ?s),
+                                          haLimiteVelocitàLegale(?s, ?l)
+                                          ->haLimiteVelocitàRaccomandato(?t, ?l)
+                                          """)
