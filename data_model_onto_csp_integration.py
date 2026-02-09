@@ -36,13 +36,64 @@ time_of_day = {
 def carica_dataset(path):
     try:
         df = pd.read_csv(path)
-        print(f"✅ Dataset caricato con successo: {df.shape[0]} righe e {df.shape[1]} colonne.")
+        print(f"📊 Dataset caricato con successo: {df.shape[0]} righe e {df.shape[1]} colonne.")
         return df
     except FileNotFoundError:
         print("❌ Errore: File non tråovato. Controlla il percorso del file.")
         return None
     
-def preprocessa_dataset(df, name = 'dataset'):
+EXPECTED_FEATURES = [
+    "num_lanes",
+    "curvature",
+    "speed_limit",
+    "road_signs_present",
+    "public_road",
+    "holiday",
+    "school_season",
+    "road_type_highway",
+    "road_type_rural",
+    "road_type_urban",
+    "weather_clear",
+    "weather_foggy",
+    "weather_rainy",
+    "time_of_day_afternoon",
+    "time_of_day_evening",
+    "time_of_day_morning",
+    "lighting_daylight",
+    "lighting_dim",
+    "lighting_night",
+]
+
+def preprocessa_dataset(dfo, add_scaler=False):
+    df=dfo.copy()
+    if df is not None:
+        df['speed_limit'] = df['speed_limit'] * 1.60934
+        categorical_cols = ['road_type', "weather", "time_of_day", "lighting"]
+        df = pd.get_dummies(df, columns=categorical_cols) 
+        bool_cols = df.select_dtypes(include=['bool']).columns
+        for col in bool_cols:
+            df[col] = df[col].astype(int)
+
+        df.drop(columns=['num_reported_accidents', 'id'], inplace=True)
+
+        for col in EXPECTED_FEATURES:
+            if col not in df.columns:
+                df[col]=0
+        df = df[EXPECTED_FEATURES]
+        if add_scaler:
+            scaler = StandardScaler()
+
+            numeric_features = ['speed_limit', 'curvature', 'lane_width'] # Aggiungi altre se presenti
+
+            # Verifichiamo che le colonne esistano prima di scalare
+            existing_numeric = [c for c in numeric_features if c in df.columns]
+            df[existing_numeric] = scaler.fit_transform(df[existing_numeric])
+        return df
+    else:
+        return None
+    
+
+def preprocessa_salva_dataset(df, name = 'dataset'):
     if df is not None:
         df['speed_limit'] = df['speed_limit'] * 1.60934
         print("✅ Speed limit convertito da mph a km/h")
@@ -63,12 +114,12 @@ def preprocessa_dataset(df, name = 'dataset'):
         df[existing_numeric] = scaler.fit_transform(df[existing_numeric])
 
         print(f"✅ Scaling completato su: {existing_numeric}")
-        df.to_csv('data/test_classifier_processed.csv', index=False)
+        df.to_csv(f'data/{name}_classifier_processed.csv', index=False)
 
 def carica_modello(path):
     try:
         modello = joblib.load(path)
-        print(f"✅ Modello caricato con successo da {path}")
+        print(f"📁 Modello caricato con successo da {path}")
         return modello
     except FileNotFoundError:
         print("❌ Errore: File del modello non trovato.")
@@ -114,8 +165,12 @@ def ragiona_ontologia_SafeDrive(te):
 
 def stampa_conclusioni_ontologia_SafeDrive(t_ontology):
 
+    ROSSO = "\033[31m"
+    VERDE = "\033[32m"
+    RESET = "\033[0m"
+
     print(f"\n📍 Analisi: {t_ontology.name}")
-    print(f"   Input ML - Score: {t_ontology.haPunteggioPericolo}, Class: {t_ontology.haPericolo}")
+    print(f"   Input ML - Score: {ROSSO}{t_ontology.haPunteggioPericolo:.2f}{RESET}, Class: {ROSSO}{t_ontology.haPericolo}{RESET}")
     
     # Recuperiamo lo Stato di Sicurezza inferito
     if t_ontology.haStatoSicurezza:
@@ -144,7 +199,7 @@ def stampa_conclusioni_ontologia_SafeDrive(t_ontology):
 def costruisci_risolvi_CSP(segmenti_stradali):
     limiti = []
     for s in segmenti_stradali.itertuples():
-        limiti.append(s['speed_limit'])
+        limiti.append(s.speed_limit)
     
     csp_segmenti_stradali=csp_builder(limiti)
     risolutore = DF_branch_and_bound_opt(csp_segmenti_stradali, bound=2000)
@@ -156,29 +211,36 @@ def costruisci_risolvi_CSP(segmenti_stradali):
         return [soluzione[var] for var in sorted(soluzione.keys(), key=lambda x: x.name)]
     return None
 
-def messa_in_sicurezza(segmenti_stradali):
+def messa_in_sicurezza(segmenti_stradali, modello_classificazione):
     """
-    Modifica il dataframe se il modello ML predice un rischio (classe 1)
+    segmanti_stradali : dataframe di road_system.csv non processato
+    Modifica il DATAFRAME se il modello ML predice un rischio (classe 1)
     e poi ottimizza con il CSP.
     """
+    segmento = preprocessa_dataset(segmenti_stradali, add_scaler=True)
     
     # Usiamo l'indice per poter modificare il DataFrame originale
     for i in segmenti_stradali.index:
-        # Passiamo la riga corrente al modello (es. segmenti_stradali.loc[i])
-        while predizione(modello_classificazione, segmenti_stradali.loc[i]) == 1:
-            segmenti_stradali.at[i, 'speed_limit'] -= 10
+        while True:
+            
 
-            # Clausola di salvaguardia per evitare loop infiniti
-            if segmenti_stradali.at[i, 'speed_limit'] <= 10:
+            if predizione(modello_classificazione, segmento)[i] == 0:
+                print(f"nessun PERICOLO rilevato dal classificatore sul segmento {i}")
+                break 
+
+            print(f"PERICOLO rilevato dal classificatore sul segmento {i}, riduzione velocità")
+            
+            segmenti_stradali.at[i, 'speed_limit'] -= 10
+            
+            # Guardrail
+            if segmenti_stradali.at[i, 'speed_limit'] <= 30:
+                print(f"Velocità ridotta al minimo per il segmento {i}")
                 break
         
     return costruisci_risolvi_CSP(segmenti_stradali)
-
-    
-
-        
+     
 if __name__ == "__main__":
-    #preprocessa_dataset(carica_dataset('data/test.csv'), 'test')
+    #preprocessa_dataset(carica_dataset('data/test.csv'), True)
     X_class = carica_dataset('data/test_classifier_processed.csv')
     X_reg = carica_dataset('data/test_regressor_processed.csv')
     modello_classificazione = carica_modello('models/logistic_regression_model.pkl')
@@ -194,3 +256,5 @@ if __name__ == "__main__":
             x = popola_ontologia_SafeDrive(data.iloc[i], predizione_classificazione[0], predizione_regressione[0])
             ragiona_ontologia_SafeDrive(x)
             stampa_conclusioni_ontologia_SafeDrive(x)
+    
+    print(messa_in_sicurezza(carica_dataset("data/road_system.csv")))
