@@ -2,7 +2,12 @@ import pandas as pd
 import joblib
 from sklearn.preprocessing import StandardScaler
 import onto.ontology as owl_onto
+from owlready2 import sync_reasoner_pellet
 from onto.ontology import onto as my_ontology
+
+from csp.variable import Variable
+from csp.road_plannerCSP import csp_builder
+from csp.cspSoft import DF_branch_and_bound_opt
 
 road_type = {
     'highway': owl_onto.Autostrada,
@@ -37,7 +42,7 @@ def carica_dataset(path):
         print("❌ Errore: File non tråovato. Controlla il percorso del file.")
         return None
     
-def preprocessa_dataset(df):
+def preprocessa_dataset(df, name = 'dataset'):
     if df is not None:
         df['speed_limit'] = df['speed_limit'] * 1.60934
         print("✅ Speed limit convertito da mph a km/h")
@@ -48,7 +53,7 @@ def preprocessa_dataset(df):
             df[col] = df[col].astype(int)
 
         df.drop(columns=['num_reported_accidents', 'id'], inplace=True)
-        df.to_csv('data/test_regressor_processed.csv', index=False)
+        df.to_csv(f'data/{name}_regressor_processed.csv', index=False)
 
         scaler = StandardScaler()
         numeric_features = ['speed_limit', 'curvature', 'lane_width'] # Aggiungi altre se presenti
@@ -103,7 +108,7 @@ def popola_ontologia_SafeDrive(record, predizione_classificazione, predizione_re
 
 def ragiona_ontologia_SafeDrive(te):
     with my_ontology:
-        owl_onto.sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True, debug = 0)
+        sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True, debug = 0)
 
     return te
 
@@ -135,9 +140,45 @@ def stampa_conclusioni_ontologia_SafeDrive(t_ontology):
             print(f"      - {rac.name}")
     else:
         print("      - Guida con prudenza")
+
+def costruisci_risolvi_CSP(segmenti_stradali):
+    limiti = []
+    for s in segmenti_stradali.itertuples():
+        limiti.append(s['speed_limit'])
+    
+    csp_segmenti_stradali=csp_builder(limiti)
+    risolutore = DF_branch_and_bound_opt(csp_segmenti_stradali, bound=2000)
+    
+    soluzione, costo_totale = risolutore.optimize()
+
+    if soluzione:
+        # Estraiamo solo i VALORI delle velocità in ordine di segmento
+        return [soluzione[var] for var in sorted(soluzione.keys(), key=lambda x: x.name)]
+    return None
+
+def messa_in_sicurezza(segmenti_stradali):
+    """
+    Modifica il dataframe se il modello ML predice un rischio (classe 1)
+    e poi ottimizza con il CSP.
+    """
+    
+    # Usiamo l'indice per poter modificare il DataFrame originale
+    for i in segmenti_stradali.index:
+        # Passiamo la riga corrente al modello (es. segmenti_stradali.loc[i])
+        while predizione(modello_classificazione, segmenti_stradali.loc[i]) == 1:
+            segmenti_stradali.at[i, 'speed_limit'] -= 10
+
+            # Clausola di salvaguardia per evitare loop infiniti
+            if segmenti_stradali.at[i, 'speed_limit'] <= 10:
+                break
+        
+    return costruisci_risolvi_CSP(segmenti_stradali)
+
+    
+
         
 if __name__ == "__main__":
-    #preprocessa_dataset(carica_dataset('data/test.csv'))
+    #preprocessa_dataset(carica_dataset('data/test.csv'), 'test')
     X_class = carica_dataset('data/test_classifier_processed.csv')
     X_reg = carica_dataset('data/test_regressor_processed.csv')
     modello_classificazione = carica_modello('models/logistic_regression_model.pkl')

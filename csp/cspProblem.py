@@ -9,8 +9,7 @@
 # See: https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en
 
 import random
-from variable import Variable 
-
+from variable import Variable
 # for showing csps:
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines

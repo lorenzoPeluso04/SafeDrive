@@ -1,6 +1,13 @@
+import sys
+import os
+
+# Aggiunge la cartella corrente al path per trovare 'variable', 'cspProblem', ecc.
+sys.path.append(os.path.dirname(__file__))
+
 from variable import Variable
 from cspProblem import CSP
 from cspSoft import SoftConstraint
+from cspSoft import DF_branch_and_bound_opt
 
 # 1. Classe per i dati dei segmenti stradali
 class SegmentoStradale(object):
@@ -74,7 +81,27 @@ def csp_builder(lista_limiti_segmenti):
     return CSP("Traffico Autostradale", variables=set(variabili), constraints=constraints)
 
 if __name__ == "__main__":
-    limiti = [50, 50, 90, 130] 
-    problema = csp_builder(limiti)
     
-    print(f"Creato CSP con {len(problema.variables)} variabili e {len(problema.constraints)} vincoli.")
+    
+    # 1. Definiamo i limiti dei segmenti (input del problema)
+    limiti = [20, 50, 100, 130] 
+    
+    # 2. Costruiamo il problema CSP
+    problema = csp_builder(limiti)
+
+    # 3. Inizializziamo il risolutore Branch and Bound
+    # Passiamo il problema e un bound iniziale molto alto (infinito o un numero grande)
+    risolutore = DF_branch_and_bound_opt(problema, bound=2000)
+    
+    # 4. Chiamiamo il metodo optimize() per trovare la soluzione migliore
+    soluzione, costo_totale = risolutore.optimize()
+    
+    # 5. Stampiamo i risultati
+    if soluzione:
+        print("\n--- SOLUZIONE OTTIMA TROVATA ---")
+        # Ordiniamo per nome della variabile per leggibilità
+        for var_name in sorted(soluzione.keys(), key=lambda x: x.name):
+            print(f"{var_name}: {soluzione[var_name]} km/h")
+        print(f"\nCosto totale minimo: {costo_totale:.2f}")
+    else:
+        print("\nNessuna soluzione trovata sotto il bound specificato.")
