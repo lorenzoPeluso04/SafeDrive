@@ -160,7 +160,7 @@ with onto:
         range = [int]
     
     class haLimiteVelocitàLegale(DatatypeProperty, FunctionalProperty):
-        domanin = [Strada]
+        domain = [Strada]
         range = [int]
     
     class haLimiteVelocitàRaccomandato(DatatypeProperty, FunctionalProperty):

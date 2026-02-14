@@ -9,6 +9,43 @@ from sklearn.preprocessing import StandardScaler
 sns.set_theme(style="whitegrid")
 plt.rcParams['figure.dpi'] = 100
 
+def plot_accident_risk_distribution(data, column_name='accident_risk'):
+    """
+    Riproduce il grafico della distribuzione del rischio di incidenti 
+    con istogramma, KDE, media e mediana.
+    """
+    # Calcolo statistiche
+    mean_val = data[column_name].mean()
+    median_val = data[column_name].median()
+    
+    # Inizializzazione plot
+    plt.figure(figsize=(10, 5))
+    
+    # Creazione Istogramma + KDE
+    sns.histplot(data[column_name], kde=True, stat="density", 
+                 color='dodgerblue', bins=40, alpha=0.8, edgecolor='white')
+    
+    # Aggiunta linee verticali per Media e Mediana
+    plt.axvline(mean_val, color='red', linestyle='--', 
+                label=f'Media = {mean_val:.3f}')
+    plt.axvline(median_val, color='red', linestyle=':', 
+                linewidth=2, label=f'Mediana = {median_val:.3f}')
+    
+    # Personalizzazione estetica
+    plt.title('Distribuzione di Accident Risk', fontsize=14, fontweight='bold', pad=15)
+    plt.xlabel('Accident Risk', fontsize=12)
+    plt.ylabel('Density', fontsize=12)
+    plt.legend(frameon=True)
+    plt.grid(axis='y', alpha=0.3)
+    
+    # Rimuovere i bordi superiori e destri per un look pulito
+    sns.despine(offset=5)
+    
+    plt.tight_layout()
+    plt.show()
+
+
+
 # %% [2] Caricamento del Dataset
 # Sostituisci 'data/train.csv' con il tuo percorso effettivo
 try:
@@ -72,7 +109,7 @@ except FileNotFoundError:
 
 # %% [8] Conversione del Target in Classi
 # Trasformiamo il rischio continuo in due classi: 1 (Alto Rischio), 0 (Basso Rischio)
-df['is_dangerous'] = (df['accident_risk'] >= 0.6).astype(int)
+df['is_dangerous'] = (df['accident_risk'] >= 0.4).astype(int)
 
 print(f"✅ Target binarizzato: {df['is_dangerous'].value_counts().to_dict()}")
 # Rimuoviamo la colonna originale del rischio numerico per non "barare" durante il training
@@ -94,3 +131,12 @@ print(df.head(5))
 # %% [10] Salvataggio
 df.to_csv('data/classification_dataset_processed.csv', index=False)
 print("🚀 Fase 1 completata! Dataset pronto per Regressione Logistica e Random Forest.")
+ #%%
+try:
+    df = pd.read_csv("data/dataset_processed.csv")
+    print(f"✅ Dataset caricato con successo: {df.shape[0]} righe e {df.shape[1]} colonne.")
+except FileNotFoundError:
+    print("❌ Errore: File non trovato. Controlla il percorso del file.")
+
+plot_accident_risk_distribution(df)
+# %%

@@ -5,7 +5,7 @@ import onto.ontology as owl_onto
 from owlready2 import sync_reasoner_pellet
 from onto.ontology import onto as my_ontology
 
-from csp.variable import Variable
+#from csp.variable import Variable
 from csp.road_plannerCSP import csp_builder
 from csp.cspSoft import DF_branch_and_bound_opt
 
@@ -166,7 +166,6 @@ def ragiona_ontologia_SafeDrive(te):
 def stampa_conclusioni_ontologia_SafeDrive(t_ontology):
 
     ROSSO = "\033[31m"
-    VERDE = "\033[32m"
     RESET = "\033[0m"
 
     print(f"\n📍 Analisi: {t_ontology.name}")

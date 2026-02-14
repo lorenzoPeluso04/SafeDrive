@@ -13,7 +13,7 @@ from metrics import plot_learning_curve
 
 #%% [2] Caricamento del Dataset
 try:
-    df = pd.read_csv('data/classification_dataset_processed.csv')
+    df = pd.read_csv('../data/classification_dataset_processed.csv')
     print(f"✅ Dataset caricato con successo: {df.shape[0]} righe e {df.shape[1]} colonne.")
     #print(df.head(5))
 except FileNotFoundError:
@@ -21,7 +21,7 @@ except FileNotFoundError:
 
 # %% Grafici per l'analisi esplorativa dei dati
 
-dfo = pd.read_csv('data/dataset_processed.csv')
+dfo = pd.read_csv('../data/dataset_processed.csv')
 
 plt.scatter(dfo['curvature'], dfo['accident_risk'])
 plt.xlabel('Curvature')
@@ -61,7 +61,7 @@ print(f"✅ Miglior score CV: {grid_search.best_score_:.4f}")
 
 # Usa il modello ottimale
 model = grid_search.best_estimator_
-joblib.dump(model, 'models/logistic_regression_model.pkl')
+joblib.dump(model, '../models/logistic_regression_model.pkl')
 print("✅ Modello salvato con successo!")
 
 # %% [5] Valutazione del Modello

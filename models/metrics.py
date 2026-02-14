@@ -106,6 +106,7 @@ def random_forest_metrics_(model, X, y, test_size=0.2, random_state=19):
     feature_importance_df.to_csv('../Results/feature_importance.csv', index=False)
 
 
+#%% Plot 
 #%% [1] Caricamento del Dataset
 try:
     df = pd.read_csv('../data/dataset_processed.csv')
@@ -124,5 +125,7 @@ try:
 except FileNotFoundError:
     print("❌ Errore: Modello non trovato. Assicurati che 'random_forest_model.pkl' esista.")
 
-# %% [3] Valutazione del Modello su Test Set
+#%% [3] Valutazione del Modello su Test Set
 random_forest_metrics_(best_rfr, X, y)
+
+# %%

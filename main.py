@@ -46,7 +46,3 @@ if __name__ == "__main__":
     for i in range(len(data)):
         print(f"\nNuovo limite di velocità del segmento {i} ----> {VERDE}{lista_limiti[i]}{RESET}")
     print("\n")
-
-
-    
-

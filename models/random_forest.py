@@ -50,6 +50,7 @@ print(f"✅ Valutazione completata! MAE: {mae:.4f}")
 """Grazie alla tecnica di Cross Validation possiamo sperimantare con gli iperparametri per trovare quelli migliori allo scopo della predizione"""
 
 param_grid = {
+    'criterion' : ['gini', 'entropy'],
     'n_estimators': [100, 200], #numero di alberi nella foresta
     'max_depth': [10, 20],      #profondità massima di ogni albero
     'min_samples_split': [2, 5],    #numero minimo di campioni richiesti per dividere un nodo
