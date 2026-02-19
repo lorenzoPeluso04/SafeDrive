@@ -201,9 +201,11 @@ def costruisci_risolvi_CSP(segmenti_stradali):
         limiti.append(s.speed_limit)
     
     csp_segmenti_stradali=csp_builder(limiti)
-    risolutore = DF_branch_and_bound_opt(csp_segmenti_stradali, bound=2000)
+    risolutore = DF_branch_and_bound_opt(csp_segmenti_stradali, bound=1500)
     
     soluzione, costo_totale = risolutore.optimize()
+
+    print(f"\nCosto totale minimo: {costo_totale:.2f}")
 
     if soluzione:
         # Estraiamo solo i VALORI delle velocità in ordine di segmento

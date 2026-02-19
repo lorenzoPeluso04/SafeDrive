@@ -3,14 +3,12 @@ import pandas as pd
 import seaborn as sns
 import joblib
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import roc_curve, auc
 
 from metrics import plot_learning_curve
-
-
 #%% [2] Caricamento del Dataset
 try:
     df = pd.read_csv('../data/classification_dataset_processed.csv')
@@ -45,27 +43,40 @@ print(f"✅ Suddivisione completata: {X_train.shape[0]} righe per addestramento,
 
 # Definisci la griglia di iperparametri
 param_grid = {
-    'C': [0.001, 0.01, 0.1, 1, 10, 100],           # Inverso della forza di regolarizzazione
+    'C': [0.001, 0.01],           # Inverso della forza di regolarizzazione
     'penalty': ['l1', 'l2'],                         # Tipo di regolarizzazione
     'solver': ['lbfgs', 'liblinear'],               # Algoritmo di ottimizzazione
     'max_iter': [100, 200, 500]                     # Numero massimo di iterazioni
 }
 
+# parametri Migliori {'C': 0.001, 'max_iter': 100, 'penalty': 'l2', 'solver': 'lbfgs'}
+
 # Grid Search con Cross-Validation
 model_base = LogisticRegression(random_state=11)
-grid_search = GridSearchCV(model_base, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
+grid_search = GridSearchCV(model_base, param_grid, cv=2, scoring='neg_log_loss', n_jobs=-1)
 grid_search.fit(X_train, y_train)
 
 print(f"✅ Miglior set di iperparametri: {grid_search.best_params_}")
 print(f"✅ Miglior score CV: {grid_search.best_score_:.4f}")
 
+model = grid_search.best_estimator_
+# %% Salva il modello ottimale
+
 # Usa il modello ottimale
 model = grid_search.best_estimator_
-joblib.dump(model, '../models/logistic_regression_model.pkl')
+joblib.dump(model, '../models/logistic_regression_model_negloglossTarget.pkl')
 print("✅ Modello salvato con successo!")
 
-# %% [5] Valutazione del Modello
+# %% [5] Carica il modello ottimale
 
+try:
+    model = joblib.load('../models/logistic_regression_model.pkl')
+    print(f"📁 Modello caricato con successo da {'../models/logistic_regression_model.pkl'}")
+except FileNotFoundError:
+    print("❌ Errore: File del modello non trovato.")
+
+
+#%% Testa il modello
 y_pred = model.predict(X_test)
 print(model.score(X_test, y_test))
 

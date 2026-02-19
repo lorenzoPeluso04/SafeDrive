@@ -84,14 +84,14 @@ if __name__ == "__main__":
     
     
     # 1. Definiamo i limiti dei segmenti (input del problema)
-    limiti = [20, 50, 100, 130] 
+    limiti = [20, 50, 100, 20] 
     
     # 2. Costruiamo il problema CSP
     problema = csp_builder(limiti)
 
     # 3. Inizializziamo il risolutore Branch and Bound
     # Passiamo il problema e un bound iniziale molto alto (infinito o un numero grande)
-    risolutore = DF_branch_and_bound_opt(problema, bound=2000)
+    risolutore = DF_branch_and_bound_opt(problema, bound=1000)
     
     # 4. Chiamiamo il metodo optimize() per trovare la soluzione migliore
     soluzione, costo_totale = risolutore.optimize()

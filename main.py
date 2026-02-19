@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     #===============Carichiamo i modelli che abbiamo allenato in precedenza==============#
 
-    classificatore=sd.carica_modello("models/logistic_regression_model.pkl")
+    classificatore=sd.carica_modello("models/logistic_regression_model_negloglossTarget.pkl")
     regressore=sd.carica_modello("models/random_forest_model.pkl")
 
     #===========Carichiamo il dataset: un esempio di strada divisa in segmenti===========#

@@ -90,6 +90,6 @@ feature_importance_df.to_csv('../Results/feature_importance.csv', index=False)
 # %% [11] Grafico della Learning Curve
 
 # Esegui la funzione sul tuo miglior modello
-plot_learning_curve(best_rfr, X_train, y_train, "Random Forest Regressor", 'r2')
+plot_learning_curve(best_rfr, X_train, y_train, "Random Forest Regressor - r2", 'r2')
 
 # %%

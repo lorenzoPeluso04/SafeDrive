@@ -1,7 +1,7 @@
 id,road_type,num_lanes,curvature,speed_limit,lighting,weather,road_signs_present,public_road,time_of_day,holiday,school_season,num_reported_accidents
 517792,urban,2,0.25,60,daylight,rainy,True,True,evening,True,True,1
-517805,highway,1,0.54,60,daylight,rainy,True,True,evening,True,True,0
+517805,highway,1,0.54,60,daylight,clear,True,True,evening,True,True,0
 517811,urban,1,0.9,35,night,rainy,True,True,evening,True,True,2
 517810,urban,1,0.69,35,daylight,rainy,True,True,evening,True,True,2
-517846,urban,3,0.44,45,night,foggy,False,True,evening,True,True,1
-517855,urban,4,0.2,65,night,foggy,True,True,evening,True,True,1
+517846,urban,3,0.44,45,night,clear,False,True,evening,True,True,1
+517855,urban,4,0.2,65,night,clear,True,True,evening,True,True,1

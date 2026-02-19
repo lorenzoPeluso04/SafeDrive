@@ -28,7 +28,8 @@ print(f"✅ Suddivisione completata: {X_train.shape[0]} righe per addestramento,
 
 # %% [5] Addestramento del Modello Random Forest
 rfr = RandomForestRegressor(
-    n_estimators=200,
+    criterion='squared_error',
+    n_estimators=400,
     max_depth=10,
     min_samples_split=5,
     min_samples_leaf=1,
@@ -50,8 +51,8 @@ print(f"✅ Valutazione completata! MAE: {mae:.4f}")
 """Grazie alla tecnica di Cross Validation possiamo sperimantare con gli iperparametri per trovare quelli migliori allo scopo della predizione"""
 
 param_grid = {
-    'criterion' : ['gini', 'entropy'],
-    'n_estimators': [100, 200], #numero di alberi nella foresta
+    'criterion' : ['squared_error'],
+    'n_estimators': [200, 400], #numero di alberi nella foresta
     'max_depth': [10, 20],      #profondità massima di ogni albero
     'min_samples_split': [2, 5],    #numero minimo di campioni richiesti per dividere un nodo
     'min_samples_leaf': [1, 2]   #numero minimo di campioni richiesti in un nodo foglia
@@ -61,7 +62,7 @@ from sklearn.model_selection import GridSearchCV  # noqa: E402
 
 grid_search = GridSearchCV(estimator=RandomForestRegressor(random_state=13),
                             param_grid=param_grid,
-                            cv=3, #3 fold cross-validation
+                            cv=2, #fold cross-validation
                             n_jobs=-1, #esegue in parallelo su tutte le CPU disponibili
                             verbose=1) #output minimo
 grid_search.fit(X_train, y_train)
@@ -70,15 +71,15 @@ print(f"🚀 Grid Search completato! Migliori parametri: {grid_search.best_param
 """Risulta che i migliori parametri trovati sono:
     Migliori parametri: {'max_depth': 10, 'min_samples_leaf': 1, 'min_samples_split': 5, 'n_estimators': 200}"""
 # %% [8] Valutazione del Modello Ottimizzato
-best_rfr = grid_search.best_estimator_
-y_pred_optimized = best_rfr.predict(X_test)
+#rfr = grid_search.best_estimator_
+y_pred_optimized = rfr.predict(X_test)
 mse_optimized = mean_squared_error(y_test, y_pred_optimized)
 print(f"✅ Valutazione Modello Ottimizzato completata! MSE: {mse_optimized:.4f}")
 mae_optimized = mean_absolute_error(y_test, y_pred_optimized)
 print(f"✅ Valutazione Modello Ottimizzato completata! MAE: {mae_optimized:.4f}")
 
 #%% [9] Salvataggio del Modello Addestrato
-joblib.dump(best_rfr, '../models/random_forest_model.pkl')
+joblib.dump(rfr, '../models/random_forest_model.pkl')
 print("💾 Modello salvato in 'models/random_forest_model.pkl'")
 #"Risulta che i migliori parametri trovati sono:\n    Migliori parametri: {'max_depth': 10, 'min_samples_leaf': 1, 'min_samples_split': 5, 'n_estimators': 200}"
 # %%
